@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="row justify-content-center">
+    <div class="col-lg-7 col-md-9">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-info text-white py-3">
+                <h4 class="mb-0 fs-5 fw-bold">Custom Financial Data Export Panel</h4>
+            </div>
+            
+            <div class="card-body p-4 bg-white">
+                <form method="POST" action="{{ url_for('export_data') }}">
+                    
+                    <h5 class="text-secondary border-bottom pb-2 mb-3 fs-6 fw-bold">1. Filter Settings</h5>
+                    <div class="mb-4">
+                        <label for="filter_category" class="form-label small fw-bold text-muted">Select Activity Scope</label>
+                        <select id="filter_category" name="filter_category" class="form-select">
+                            <option value="All">All Scope (Snack Station & PASN Events)</option>
+                            <option value="Snack Station">Snack Station Only</option>
+                            <option value="PASN Event">PASN Event Only</option>
+                        </select>
+                    </div>
+
+                    <h5 class="text-secondary border-bottom pb-2 mb-3 fs-6 fw-bold">2. Select Fields to Include in CSV</h5>
+                    <div class="mb-4 border p-3 rounded bg-light">
+                        <div class="row g-3">
+                            <div class="col-6 col-sm-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="fields" value="ID" id="chk_ID" checked>
+                                    <label class="form-check-label small" for="chk_ID">Transaction ID</label>
+                                </div>
+                            </div>
+                            <div class="col-6 col-sm-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="fields" value="Date" id="chk_Date" checked>
+                                    <label class="form-check-label small" for="chk_Date">Date</label>
+                                </div>
+                            </div>
+                            <div class="col-6 col-sm-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="fields" value="Activity" id="chk_Activity" checked>
+                                    <label class="form-check-label small" for="chk_Activity">Activity Type</label>
+                                </div>
+                            </div>
+                            <div class="col-6 col-sm-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="fields" value="Type" id="chk_Type" checked>
+                                    <label class="form-check-label small" for="chk_Type">Flow (Income/Exp)</label>
+                                </div>
+                            </div>
+
+                            <div class="col-6 col-sm-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="fields" value="Account_Type" id="chk_Account_Type" checked>
+                                    <label class="form-check-label small text-success fw-bold" for="chk_Account_Type">Financial Account</label>
+                                </div>
+                            </div>
+
+                            <div class="col-6 col-sm-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="fields" value="Amount" id="chk_Amount" checked>
+                                    <label class="form-check-label small" for="chk_Amount">Amount ($)</label>
+                                </div>
+                            </div>
+                            <div class="col-6 col-sm-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="fields" value="Description" id="chk_Description" checked>
+                                    <label class="form-check-label small" for="chk_Description">Description</label>
+                                </div>
+                            </div>
+                            <div class="col-6 col-sm-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="fields" value="Submitter" id="chk_Submitter" checked>
+                                    <label class="form-check-label small" for="chk_Submitter">Submitter</label>
+                                </div>
+                            </div>
+                            <div class="col-6 col-sm-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="fields" value="Status" id="chk_Status" checked>
+                                    <label class="form-check-label small" for="chk_Status">Approval Status</label>
+                                </div>
+                            </div>
+                            <div class="col-6 col-sm-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="fields" value="Approver" id="chk_Approver" checked>
+                                    <label class="form-check-label small" for="chk_Approver">Authorized By</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center pt-2">
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary px-4" style="text-decoration: none;">
+                            Back to Dashboard
+                        </a>
+                        <button type="submit" class="btn btn-info text-white px-4 fw-bold shadow-sm">
+                            Generate & Download CSV
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

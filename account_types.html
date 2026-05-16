@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-4 mb-4">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-success text-white py-3"><h5 class="mb-0 fw-bold fs-6">Create Account Archetype</h5></div>
+            <div class="card-body p-4 bg-white">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="name" class="form-label small fw-bold">Account Designation Name</label>
+                        <input type="text" id="name" name="name" class="form-control" placeholder="e.g., Petty Cash Box, ANZ Bank" required>
+                        <small class="text-muted">Master override configuration.</small>
+                    </div>
+                    <button type="submit" class="btn btn-success w-100 fw-bold">Activate Account Type</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-dark text-white py-3"><h5 class="mb-0 fw-bold fs-6">Active Operational Accounts</h5></div>
+            <div class="card-body p-0 table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-3">ID</th>
+                            <th>Account Name</th>
+                            <th class="pe-3 text-end">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for t in types %}
+                        <tr>
+                            <td class="ps-3 text-muted small">{{ t.id }}</td>
+                            <td class="fw-bold text-secondary">{{ t.name }}</td>
+                            <td class="pe-3 text-end">
+                                <a href="{{ url_for('delete_account_type', type_id=t.id) }}" class="btn btn-sm btn-outline-danger py-1" onclick="return confirm('Deactivate this financial account?');">
+                                    Discontinue
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

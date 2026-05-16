@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row justify-content-center mt-4">
+    <div class="col-md-6">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-dark text-white py-3"><h5 class="mb-0 fw-bold fs-6">Modify Entry Workspace (ID: {{ record.id }})</h5></div>
+            <div class="card-body p-4 bg-white">
+                <form method="POST" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Associated Activity Scope</label>
+                        <select name="category" class="form-select">
+                            <option value="Snack Station" {% if record.category == 'Snack Station' %}selected{% endif %}>Snack Station</option>
+                            <option value="PASN Event" {% if record.category == 'PASN Event' %}selected{% endif %}>PASN Event</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Adjust Financial Account</label>
+                        <select name="account_type_id" class="form-select">
+                            {% for at in account_types %}
+                            <option value="{{ at.id }}" {% if record.account_type_id == at.id %}selected{% endif %}>{{ at.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Adjusted Amount ($)</label>
+                        <input type="number" step="0.01" name="amount" class="form-control" value="{{ record.amount }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Statement / Purpose Modification</label>
+                        <textarea name="description" class="form-control" rows="3" required>{{ record.description }}</textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Replace Invoice (Optional)</label>
+                        <input type="file" name="invoice" class="form-control" accept="image/*,.pdf">
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-4 pt-2 border-top">
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary px-4">Cancel</a>
+                        <button type="submit" class="btn btn-primary px-4 fw-bold">Save Workspace Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

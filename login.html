@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-4">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-primary text-white text-center py-3">
+                <h4 class="mb-0">System Login</h4>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST" action="{{ url_for('login') }}">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username</label>
+                        <input type="text" id="username" name="username" class="form-control" autocomplete="username" required autofocus>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" id="password" name="password" class="form-control" autocomplete="current-password" required>
+                    </div>
+                    <div class="mb-3">
+                        <small class="text-muted">Default user: <code>member1</code> or <code>finance1</code></small><br>
+                        <small class="text-muted">Default password: <code>pass123</code></small>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 py-2">Sign In</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

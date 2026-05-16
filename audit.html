@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="row justify-content-center">
+    <div class="col-12">
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-dark text-white py-3">
+                <h5 class="mb-0 fw-bold fs-6">🔍 Invoice & Transaction Audit Database Search</h5>
+            </div>
+            <div class="card-body p-4 bg-white">
+                <form method="GET" action="{{ url_for('audit_panel') }}" class="row g-3 align-items-end">
+                    
+                    <div class="col-md-3">
+                        <label for="audit_date" class="form-label small fw-bold text-secondary">Search by Date (日期)</label>
+                        <input type="date" id="audit_date" name="date" class="form-control" value="{{ search_date }}">
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label for="audit_keyword" class="form-label small fw-bold text-secondary">Search by Description Content / Item Key (内容描述)</label>
+                        <input type="text" id="audit_keyword" name="keyword" class="form-control" placeholder="e.g., Snack Purchase, Market, Invoice ID..." value="{{ keyword }}">
+                    </div>
+                    
+                    <div class="col-md-3 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary w-100 fw-bold">Apply Query</button>
+                        <a href="{{ url_for('audit_panel') }}" class="btn btn-outline-secondary w-50">Reset</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-light border-bottom d-flex justify-content-between align-items-center py-3">
+                <h6 class="mb-0 fw-bold text-secondary">Audit Logs Matching Query Result</h6>
+                <span class="badge bg-dark">Found: {{ records|length }} items</span>
+            </div>
+            <div class="card-body p-0 table-responsive">
+                <table class="table table-hover align-middle mb-0" style="font-size: 13px;">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-3">ID</th>
+                            <th>Date / Timestamp</th>
+                            <th>Scope</th>
+                            <th>Type</th>
+                            <th>Account</th>
+                            <th>Amount</th>
+                            <th>Content / Product Details</th>
+                            <th>Filed By</th>
+                            <th class="pe-3 text-end">Digital Invoice Attachment</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if not records %}
+                        <tr>
+                            <td colspan="9" class="text-center py-5 text-muted">
+                                No archived invoices match your specific audit filters. Try resetting parameters.
+                            </td>
+                        </tr>
+                        {% else %}
+                            {% for r in records %}
+                            <tr>
+                                <td class="ps-3 text-muted" style="font-size: 11px;">#{{ r.id }}</td>
+                                <td class="fw-semibold text-secondary">{{ r.date.strftime('%d-%m-%Y %H:%M') if r.date else 'N/A' }}</td>
+                                <td><span class="badge bg-light text-dark border">{{ r.category }}</span></td>
+                                <td><small class="text-uppercase fw-bold text-muted" style="font-size: 10px;">{{ r.type }}</small></td>
+                                <td>{{ r.account_type.name if r.account_type else 'N/A' }}</td>
+                                <td class="fw-bold {% if r.type == 'Income' %}text-success{% else %}text-danger{% endif %}">
+                                    ${{ "%.2f"|format(r.amount) }}
+                                </td>
+                                <td>
+                                    <div class="text-truncate" style="max-width: 280px;" title="{{ r.description }}">
+                                        {{ r.description }}
+                                    </div>
+                                </td>
+                                <td><small class="badge bg-secondary">{{ r.submitter.username if r.submitter else 'System' }}</small></td>
+                                <td class="pe-3 text-end">
+                                    {% if r.invoice_file %}
+                                        <a href="{{ url_for('view_invoice', filename=r.invoice_file) }}" target="_blank" class="btn btn-sm btn-success py-1 px-3 fw-bold">
+                                            📄 View Digital Document
+                                        </a>
+                                    {% else %}
+                                        <span class="text-muted small italic">No physical backup filed</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="mt-3">
+            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-dark px-4 small fw-bold">Back to Dashboard Workspace</a>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

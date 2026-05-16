@@ -1,0 +1,280 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="row mb-4">
+    <div class="col-md-6 mb-3">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-primary text-white py-2 fw-bold small">📊 Snack Station Balance Sheet</div>
+            <div class="card-body bg-white text-center">
+                <div class="row">
+                    <div class="col-4 border-end">
+                        <small class="text-muted d-block" style="font-size:11px">Total Revenue</small>
+                        <span class="text-success fw-bold">${{ "%.2f"|format(stats.snack_income) }}</span>
+                    </div>
+                    <div class="col-4 border-end">
+                        <small class="text-muted d-block" style="font-size:11px">Total Expenses</small>
+                        <span class="text-danger fw-bold">${{ "%.2f"|format(stats.snack_expense) }}</span>
+                    </div>
+                    <div class="col-4">
+                        <small class="text-muted d-block" style="font-size:11px">Net Balance</small>
+                        <span class="fw-bold {% if stats.snack_balance >= 0 %}text-primary{% else %}text-warning{% endif %}">
+                            ${{ "%.2f"|format(stats.snack_balance) }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 mb-3">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-dark text-white py-2 fw-bold small">📊 PASN Events Budget Tracking</div>
+            <div class="card-body bg-white text-center">
+                <div class="row">
+                    <div class="col-4 border-end">
+                        <small class="text-muted d-block" style="font-size:11px">Allocated/Income</small>
+                        <span class="text-success fw-bold">${{ "%.2f"|format(stats.pasn_income) }}</span>
+                    </div>
+                    <div class="col-4 border-end">
+                        <small class="text-muted d-block" style="font-size:11px">Total Expended</small>
+                        <span class="text-danger fw-bold">${{ "%.2f"|format(stats.pasn_expense) }}</span>
+                    </div>
+                    <div class="col-4">
+                        <small class="text-muted d-block" style="font-size:11px">Available Budget</small>
+                        <span class="fw-bold {% if stats.pasn_balance >= 0 %}text-primary{% else %}text-warning{% endif %}">
+                            ${{ "%.2f"|format(stats.pasn_balance) }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-4 mb-4">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-secondary text-white py-3">
+                <h5 class="mb-0 fs-6 fw-bold">New Transaction / Request</h5>
+            </div>
+            <div class="card-body p-4 bg-white">
+                <form method="POST" action="{{ url_for('dashboard') }}" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Activity / Station</label>
+                        <select name="category" class="form-select">
+                            <option value="Snack Station">Snack Station</option>
+                            <option value="PASN Event">PASN Event</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Transaction Type</label>
+                        <select name="type" class="form-select">
+                            <option value="Reimbursement">Reimbursement Request</option>
+                            {% if current_user and current_user.role in ['master', 'accountant'] %}
+                            <option value="Income">Direct Income (e.g., Sales, Funding)</option>
+                            <option value="Direct Expense">Direct Expense (e.g., Stocking Up)</option>
+                            {% endif %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Financial Account/Method</label>
+                        <select name="account_type_id" class="form-select" required>
+                            {% for at in account_types %}
+                            <option value="{{ at.id }}">{{ at.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Amount ($)</label>
+                        <input type="number" step="0.01" name="amount" class="form-control" placeholder="0.00" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Description / Purpose</label>
+                        <textarea name="description" class="form-control" rows="3" placeholder="Provide operational details..." required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Upload Invoice (Image/PDF)</label>
+                        <input type="file" name="invoice" class="form-control" accept="image/*,.pdf">
+                    </div>
+                    <button type="submit" class="btn btn-success w-100 py-2 fw-bold">Submit Record</button>
+                </form>
+            </div>
+        </div>
+        {% if current_user and current_user.role in ['master', 'accountant'] %}
+        <div class="mt-3">
+            <a href="{{ url_for('export_data') }}" class="btn btn-outline-info w-100 shadow-sm fw-bold">Go to Custom Export Panel</a>
+        </div>
+        {% endif %}
+
+        {% if current_user and current_user.role == 'master' %}
+        <div class="mt-2">
+            <a href="{{ url_for('manage_account_types') }}" class="btn btn-outline-success w-100 shadow-sm fw-bold">⚙️ Manage Account Types</a>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center py-3">
+                <h5 class="mb-0 fs-6 fw-bold">Financial Logs</h5>
+                <span class="badge bg-secondary" style="font-size:10px;">Role: {{ current_user.role|upper if current_user else 'GUEST' }}</span>
+            </div>
+            <div class="card-body p-0 table-responsive">
+                <table class="table table-hover align-middle mb-0" style="font-size: 13px;">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-3">Date</th>
+                            <th>Category</th>
+                            <th>Type</th>
+                            <th>Account</th> 
+                            <th>Amount</th>
+                            <th>Invoice</th>
+                            <th class="pe-3">Status / Operational Process</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if not records %}
+                        <tr><td colspan="7" class="text-center py-4 text-muted">No records found.</td></tr>
+                        {% else %}
+                            {% for r in records %}
+                            <tr>
+                                <td class="ps-3 text-muted">{{ r.date.strftime('%m-%d') if r.date else 'N/A' }}</td>
+                                <td><span class="badge bg-light text-dark border">{{ r.category }}</span></td>
+                                <td><small class="text-uppercase fw-semibold text-muted" style="font-size:10px;">{{ r.type }}</small></td>
+                                <td class="fw-semibold text-secondary">{{ r.account_type.name if r.account_type else 'N/A' }}</td>
+                                <td class="fw-bold {% if r.type=='Income' %}text-success{% else %}text-danger{% endif %}">${{ "%.2f"|format(r.amount) }}</td>
+                                <td>
+                                    {% if r.invoice_file %}
+                                    <a href="{{ url_for('view_invoice', filename=r.invoice_file) }}" target="_blank" class="btn btn-sm btn-outline-primary py-0 px-2" style="font-size:11px;">View</a>
+                                    {% else %}<span class="text-muted small">None</span>{% endif %}
+                                </td>
+                                <td class="pe-3">
+                                    {% if r.status == 'Pending Request' %}
+                                        <span class="badge bg-warning text-dark mb-1">Pending Request</span>
+                                    {% elif r.status == 'Pending Authorization' %}
+                                        <span class="badge bg-info text-dark mb-1">Awaiting Auth</span>
+                                    {% elif r.status == 'Approved (Online)' %}
+                                        <span class="badge bg-success mb-1">Paid (Online)</span>
+                                    {% elif r.status == 'Approved (Cash)' %}
+                                        <span class="badge bg-success mb-1">Paid (Cash)</span>
+                                    {% elif r.status == 'Approved' %}
+                                        <span class="badge bg-success mb-1">Approved</span>
+                                    {% else %}
+                                        <span class="badge bg-danger mb-1">{{ r.status }}</span>
+                                    {% endif %}
+
+                                    <div class="my-1">
+                                        {% if r.status == 'Pending Request' and current_user and current_user.role in ['master', 'accountant'] %}
+                                            <div class="btn-group btn-group-sm">
+                                                <a href="{{ url_for('submit_bank', record_id=r.id) }}" class="btn btn-primary py-0 px-1" style="font-size: 10px;">Submit to Bank</a>
+                                                <a href="{{ url_for('reject_workflow', record_id=r.id) }}" class="btn btn-danger py-0 px-1" style="font-size: 10px;">Reject</a>
+                                            </div>
+                                        {% endif %}
+
+                                        {% if r.status == 'Pending Authorization' and current_user and current_user.role in ['master', 'accountant'] %}
+                                            {% if current_user.id == r.submitter_id %}
+                                                <small class="text-muted d-block italic" style="font-size:10px;">Awaiting peer auth (You requested)</small>
+                                            {% elif current_user.id == r.bank_submitter_id and current_user.role == 'accountant' %}
+                                                <small class="text-muted d-block italic" style="font-size:10px;">Awaiting peer auth (You recorded bank transfer)</small>
+                                            {% else %}
+                                                <div class="d-flex flex-column gap-1">
+                                                    <div class="btn-group btn-group-sm">
+                                                        <a href="{{ url_for('authorize_payment', record_id=r.id, method='online') }}" class="btn btn-success py-0 px-1" style="font-size: 9px; font-weight: bold;">Online Authorise</a>
+                                                        <a href="{{ url_for('authorize_payment', record_id=r.id, method='cash') }}" class="btn btn-success py-0 px-1" style="font-size: 9px; font-weight: bold;">Disburse Cash</a>
+                                                    </div>
+                                                    <a href="{{ url_for('reject_workflow', record_id=r.id) }}" class="btn btn-sm btn-outline-danger py-0 px-1 text-center w-100" style="font-size: 9px;">Reject Request</a>
+                                                </div>
+                                            {% endif %}
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="mt-1">
+                                        {% if current_user and ((r.submitter_id == current_user.id and r.status == 'Pending Request') or current_user.role in ['master', 'accountant']) %}
+                                            <a href="{{ url_for('edit_record', record_id=r.id) }}" class="btn btn-sm btn-outline-secondary py-0 px-1" style="font-size: 10px; text-decoration: none;">Edit</a>
+                                            <a href="{{ url_for('delete_record', record_id=r.id) }}" class="btn btn-sm btn-outline-danger py-0 px-1" style="font-size: 10px; text-decoration: none;" onclick="return confirm('Security Prompt: Erase this item?');">Delete</a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-info text-white py-3">
+                <h5 class="mb-0 fs-6 fw-bold">📅 Monthly Financial Statement</h5>
+            </div>
+            <div class="card-body p-4 bg-white">
+                {% if not records %}
+                    <p class="text-muted text-center my-2">No monthly aggregated data available.</p>
+                {% else %}
+                    {% set ns = namespace(current_month='') %}
+                    {% for r in records %}
+                        {% set record_month = r.date.strftime('%B %Y') if r.date else 'Undated Records' %}
+                        {% if record_month != ns.current_month %}
+                            {% if not loop.first %}
+                                        </tbody>
+                                    </table>
+                                </div> 
+                            </div> 
+                            {% endif %}
+                            {% set ns.current_month = record_month %}
+                            <div class="card mb-4 border shadow-sm">
+                                <div class="card-header bg-light py-2 fw-bold text-secondary d-flex justify-content-between align-items-center">
+                                    <span>🗓️ {{ record_month }}</span>
+                                    <small class="text-muted" style="font-size: 11px;">Chronological Descending</small>
+                                </div>
+                                <div class="card-body p-0 table-responsive">
+                                    <table class="table table-sm table-hover align-middle mb-0" style="font-size: 13px;">
+                                        <thead class="table-light text-muted">
+                                            <tr>
+                                                <th class="ps-3" style="width: 10%;">Date</th>
+                                                <th style="width: 18%;">Activity Scope</th>
+                                                <th style="width: 15%;">Type</th>
+                                                <th style="width: 15%;">Account</th>
+                                                <th style="width: 27%;">Description Summary</th>
+                                                <th class="pe-3 text-end" style="width: 15%;">Amount</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                        {% endif %}
+                        <tr>
+                            <td class="ps-3 text-muted">{{ r.date.strftime('%m-%d') if r.date else 'N/A' }}</td>
+                            <td><span class="badge bg-light text-dark border">{{ r.category }}</span></td>
+                            <td>
+                                {% if r.type == 'Income' %}
+                                    <span class="text-success small fw-bold">INFLOW</span>
+                                {% else %}
+                                    <span class="text-danger small fw-bold">OUTFLOW</span>
+                                {% endif %}
+                                <small class="text-muted d-block" style="font-size: 9px; text-transform: uppercase;">({{ r.type }})</small>
+                            </td>
+                            <td class="text-secondary fw-semibold">{{ r.account_type.name if r.account_type else 'N/A' }}</td>
+                            <td class="text-truncate" style="max-width: 240px;" title="{{ r.description }}">{{ r.description }}</td>
+                            <td class="pe-3 text-end fw-bold {% if r.type == 'Income' %}text-success{% else %}text-danger{% endif %}">
+                                {% if r.type == 'Income' %}+{% else %}-{% endif %}${{ "%.2f"|format(r.amount) }}
+                            </td>
+                        </tr>
+                        {% if loop.last %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

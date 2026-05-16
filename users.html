@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="row">
+    <!-- 左侧栏：快速新建系统账号 -->
+    <div class="col-lg-4 mb-4">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-warning text-dark py-3">
+                <h5 class="mb-0 fw-bold fs-6">Provision New User Account</h5>
+            </div>
+            <div class="card-body p-4 bg-white">
+                <form method="POST" action="{{ url_for('manage_users') }}">
+                    <input type="hidden" name="action" value="add">
+                    
+                    <div class="mb-3">
+                        <label for="username" class="form-label small fw-bold">System Username</label>
+                        <input type="text" id="username" name="username" class="form-control" placeholder="e.g., john_pasn" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="password" class="form-label small fw-bold">Initial Security Password</label>
+                        <input type="password" id="password" name="password" class="form-control" placeholder="Minimum security characters" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="role" class="form-label small fw-bold">Assigned Structural Role</label>
+                        <select id="role" name="role" class="form-select">
+                            <option value="member">Member (Submission Only)</option>
+                            <option value="accountant">Accountant (Auditing & Logging)</option>
+                            <option value="master">Master Accountant (Full Control)</option>
+                        </select>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-warning w-100 fw-bold mt-2">Provision Profile</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 右侧栏：系统账号花名册及操作台 -->
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-dark text-white py-3">
+                <h5 class="mb-0 fw-bold fs-6">System Identity & Security Roster</h5>
+            </div>
+            <div class="card-body p-0 table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-3">ID</th>
+                            <th>Username</th>
+                            <th>Current Role</th>
+                            <th>Modify Security Password</th>
+                            <th class="pe-3 text-end">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for u in users %}
+                        <tr>
+                            <td class="ps-3 text-muted" style="font-size: 13px;">{{ u.id }}</td>
+                            <td class="fw-bold text-secondary">{{ u.username }}</td>
+                            <td>
+                                {% if u.role == 'master' %}
+                                    <span class="badge bg-danger">MASTER</span>
+                                {% elif u.role == 'accountant' %}
+                                    <span class="badge bg-success">ACCOUNTANT</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">MEMBER</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <!-- 快捷重置密码微型表单 -->
+                                <form method="POST" action="{{ url_for('manage_users') }}" class="d-flex align-items-center">
+                                    <input type="hidden" name="action" value="update_password">
+                                    <input type="hidden" name="user_id" value="{{ u.id }}">
+                                    <input type="text" name="new_password" class="form-control form-control-sm me-2" placeholder="Type new password" style="max-width: 160px;" required>
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary py-1">Reset</button>
+                                </form>
+                            </td>
+                            <td class="pe-3 text-end">
+                                {% if u.id == current_user.id %}
+                                    <span class="text-muted small italic">Active Session</span>
+                                {% else %}
+                                    <a href="{{ url_for('delete_user', user_id=u.id) }}" class="btn btn-sm btn-outline-danger py-1" onclick="return confirm('Security Warning: Are you absolutely sure you want to completely wipe user workspace [{{ u.username }}]?');">
+                                        Purge Account
+                                    </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
