@@ -12,17 +12,23 @@ from openai import OpenAI
 
 # ==================== Advanced Render & PyInstaller Path Engine ====================
 if os.environ.get('RENDER'):
-    # ⚡ 【已修复修复】如果检测到运行在 Render 云端，必须先实例化 app，再将数据盘锁定在 /data 持久化挂载点
     app = Flask(__name__)
-    base_dir = '/data'
+    
+    # ⚡【智能路径自适应防崩溃引擎】
+    # 自动检测 /data 文件夹是否存在且允许程序写入（判断是否成功挂载了 Render 持久化云盘）
+    if os.path.exists('/data') and os.access('/data', os.W_OK):
+        base_dir = '/data'  # 付费版：使用不丢失数据的持久化网盘
+        print("[Render Environment] Bound to Persistent Disk Storage (/data)")
+    else:
+        base_dir = os.path.abspath(os.path.dirname(__file__))  # 免费版：降级到当前项目安全的根目录运行
+        print("[Render Environment] Disk not found or unauthorized. Fallback to Ephemeral App Root.")
+        
 elif getattr(sys, 'frozen', False):
-    # 如果处于打包后的绿色可执行单文件(.exe)环境中运行
     template_folder = os.path.join(sys._MEIPASS, 'templates')
     static_folder = os.path.join(sys._MEIPASS, 'static')
     app = Flask(__name__, template_folder=template_folder, static_folder=static_folder)
     base_dir = os.path.dirname(sys.executable)
 else:
-    # 如果处于标准的 python 源码本地开发环境中运行
     app = Flask(__name__)
     base_dir = os.path.abspath(os.path.dirname(__file__))
 
@@ -32,7 +38,6 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 限制上传发票图片�
 # ==================== 外置共享网盘/本地路径兼容注入 ====================
 shared_target_dir = base_dir 
 
-# 检查本地程序同级是否存在外置配置文件 config.json（Render云端不会受此干扰）
 config_file_path = os.path.join(base_dir, 'config.json')
 if os.path.exists(config_file_path):
     try:
@@ -48,14 +53,14 @@ if os.path.exists(config_file_path):
 app.config['UPLOAD_FOLDER'] = os.path.abspath(os.path.join(shared_target_dir, 'uploads'))
 db_absolute_path = os.path.abspath(os.path.join(shared_target_dir, 'finance.db'))
 
-# 针对 Windows 网络 UNC 路径 (\\192.168.x.x\share) 进行 SQLite 连接串规范化洗礼
+# 针对 Windows 网络 UNC 路径进行 SQLite 连接串规范化洗礼
 normalized_db_path = db_absolute_path.replace('\\', '/')
 if normalized_db_path.startswith('//') or normalized_db_path.startswith('\\\\'):
     if not normalized_db_path.startswith('///'):
         normalized_db_path = '/' + normalized_db_path.lstrip('/')
 app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{normalized_db_path}"
 
-# 建立 15 秒并发原子写入排队机制，消除内网多客户端同时写入时的共享锁冲突崩溃
+# 建立 15 秒并发原子写入排队机制
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
     'connect_args': {'timeout': 15}
 }
