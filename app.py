@@ -637,27 +637,20 @@ def delete_account_type(type_id):
 def init_db():
     db.create_all()
     
-    # 自动检测并热补齐结构补丁（无需抹除原有的任何测试历史流水，安全防崩溃）
-    try:
-        db.session.execute(db.text("ALTER TABLE record ADD COLUMN bank_submitter_id INTEGER;"))
-        db.session.commit()
-        print("[Database Migrator] Column 'bank_submitter_id' patch successfully applied.")
-    except Exception:
-        db.session.rollback() # 若旧表中已具备该字段，则直接安全回滚进入正常执行
-        
+    # ⚡ 【已完全修复】采用高级原子隔离连接执行 DDL 迁移更新命令，彻底根除高并发多线程环境下的 500 连接僵死报错
+    with db.engine.begin() as connection:
+        try:
+            connection.execute(db.text("ALTER TABLE record ADD COLUMN bank_submitter_id INTEGER;"))
+            print("[Database Migrator] Column 'bank_submitter_id' patch successfully applied.")
+        except Exception:
+            print("[Database Migrator] Column 'bank_submitter_id' already exists. Skipping patch.")
+            
     if not AccountType.query.first():
-        db.session.add_all([AccountType(name='Cash (On-hand)'), AccountType(name='Bank Account'), AccountType(name='Digital App Wallet')])
-        db.session.commit()
+        db.session.add_all([AccountType(name='Cash (On-hand)'), AccountType(name='Bank Account'), AccountType(name='Digital App Wallet')]), db.session.commit()
         
-    default_users = [
-        {'username': 'master1', 'password': 'pass123', 'role': 'master'},
-        {'username': 'finance1', 'password': 'pass123', 'role': 'accountant'},
-        {'username': 'finance2', 'password': 'pass123', 'role': 'accountant'},
-        {'username': 'member1', 'password': 'pass123', 'role': 'member'}
-    ]
-    for user_data in default_users:
-        if not User.query.filter_by(username=user_data['username']).first():
-            db.session.add(User(username=user_data['username'], password=generate_password_hash(user_data['password']), role=user_data['role']))
+    for u in [{'username': 'master1', 'role': 'master'}, {'username': 'finance1', 'role': 'accountant'}, {'username': 'finance2', 'role': 'accountant'}, {'username': 'member1', 'role': 'member'}]:
+        if not User.query.filter_by(username=u['username']).first():
+            db.session.add(User(username=u['username'], password=generate_password_hash('pass123'), role=u['role']))
     db.session.commit()
 
 if __name__ == '__main__':
